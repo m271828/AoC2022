@@ -1,8 +1,9 @@
 package day02;
 
+import utility.Associations;
+import utility.FileUtil;
+
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 
 public class Tournament {
@@ -22,10 +23,9 @@ public class Tournament {
 
     public Tournament(String dataFile, boolean convertAsChoice) throws IOException {
         rounds = new ArrayList<>();
-        var lines = Files.readAllLines(Path.of(dataFile));
-        for (String line : lines) {
-            var choices = line.split(" ");
-            Pair round = new Pair(choices[0], choices[1], convertAsChoice);
+        var lines = FileUtil.splitLinesBy(dataFile, " ");
+        for (Associations.Pair<String> pair : lines) {
+            Pair round = new Pair(pair.first(), pair.second(), convertAsChoice);
             rounds.add(round);
         }
     }

@@ -76,13 +76,6 @@ public class Day02 {
     }
 
     @Test
-    public void runTournamentTest() throws IOException {
-        Tournament tournament = new Tournament("src/main/resources/day_02_input.txt", true);
-        int score = tournament.runTournament();
-        System.out.println("Convert as Choice Score is: " + score);
-    }
-
-    @Test
     public void resultConversionTest() {
         assertEquals(RockPaperScissors.Winner.ELF, RockPaperScissors.convertResult("X"));
         assertEquals(RockPaperScissors.Winner.DRAW, RockPaperScissors.convertResult("Y"));
@@ -108,9 +101,18 @@ public class Day02 {
     }
 
     @Test
+    public void runTournamentTest() throws IOException {
+        Tournament tournament = new Tournament("src/main/resources/day_02_input.txt", true);
+        int score = tournament.runTournament();
+        System.out.println("Convert as Choice Score is: " + score);
+        assertEquals(15632, score);
+    }
+
+    @Test
     public void runTournamentWithWinConditionTest() throws IOException {
         Tournament tournament = new Tournament("src/main/resources/day_02_input.txt", false);
         int score = tournament.runTournament();
         System.out.println("Convert as Result Score is: " + score);
+        assertEquals(14416, score);
     }
 }

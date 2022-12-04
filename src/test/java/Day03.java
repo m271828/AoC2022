@@ -1,5 +1,7 @@
 import day03.RuckSack;
 import org.junit.jupiter.api.Test;
+import utility.Associations;
+import utility.FileUtil;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -44,18 +46,6 @@ public class Day03 {
     }
 
     @Test
-    public void runPartOne() throws IOException {
-        var lines = Files.readAllLines(Path.of("src/main/resources/day_03_input.txt"));
-        Integer prioritySum = 0;
-        for (String line : lines) {
-            RuckSack sack = new RuckSack(line.substring(0, line.length()/2), line.substring(line.length()/2));
-            prioritySum += RuckSack.score(sack.findCommonItem());
-        }
-
-        System.out.println("Sum of priority scores for sacks is: " + prioritySum);
-    }
-
-    @Test
     public void findCommonAmongSacks() {
         RuckSack sack1 = new RuckSack(v1.substring(0, v1.length()/2), v1.substring(v1.length()/2));
         RuckSack sack2 = new RuckSack(v2.substring(0, v2.length()/2), v2.substring(v2.length()/2));
@@ -65,12 +55,24 @@ public class Day03 {
     }
 
     @Test
+    public void runPartOne() throws IOException {
+        var pairs = FileUtil.splitLinesByHalf("src/main/resources/day_03_input.txt");
+        Integer prioritySum = 0;
+        for (var pair : pairs) {
+            RuckSack sack = new RuckSack(pair.first(), pair.second());
+            prioritySum += RuckSack.score(sack.findCommonItem());
+        }
+        System.out.println("Sum of priority scores for sacks is: " + prioritySum);
+        assertEquals(7568, prioritySum);
+    }
+
+    @Test
     public void runPartTwo() throws IOException {
         ArrayList<RuckSack> sacks = new ArrayList<>();
-        var lines = Files.readAllLines(Path.of("src/main/resources/day_03_input.txt"));
+        var pairs = FileUtil.splitLinesByHalf("src/main/resources/day_03_input.txt");
         Integer prioritySum = 0;
-        for (String line : lines) {
-            sacks.add(new RuckSack(line.substring(0, line.length()/2), line.substring(line.length()/2)));
+        for (var pair : pairs) {
+            sacks.add(new RuckSack(pair.first(), pair.second()));
         }
         for (int i = 0; i < sacks.size(); i += 3) {
             var s1 = sacks.get(i);
@@ -78,7 +80,7 @@ public class Day03 {
             var s3 = sacks.get(i+2);
             prioritySum += RuckSack.score(RuckSack.teamCommonItem(s1, s2, s3));
         }
-
         System.out.println("Sum of team priority scores is: " + prioritySum);
+        assertEquals(2780, prioritySum);
     }
 }

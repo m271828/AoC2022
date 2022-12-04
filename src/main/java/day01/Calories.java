@@ -1,5 +1,7 @@
 package day01;
 
+import utility.FileUtil;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -12,28 +14,14 @@ public class Calories {
     ArrayList<Integer> totalSupplies = new ArrayList<>();
 
     public Calories(String dataFile) throws IOException {
-        var lines = Files.readAllLines(Path.of(dataFile));
-        int elfIndex = 0;
+        var supplies = FileUtil.groupLines(dataFile);
 
-        for (int i = 0; i < lines.size(); i++) {
-            if (lines.get(i).isBlank()) {
-                elfIndex++;
-            } else {
-                if (supplies.size() == elfIndex) {
-                    supplies.add(new ArrayList<>());
-                }
-                supplies.get(elfIndex).add(Integer.valueOf(lines.get(i)));
+        for (var sack : supplies) {
+            Integer calories = 0;
+            for (var item : sack) {
+                calories += Integer.valueOf(item);
             }
-        }
-
-        for (ArrayList<Integer> elf : supplies) {
-            Integer total = 0;
-            for (Integer i : elf) {
-                if (i != null) {
-                    total += i;
-                }
-            }
-            totalSupplies.add(total);
+            totalSupplies.add(calories);
         }
     }
 
