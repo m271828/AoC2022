@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class FileUtil {
@@ -52,5 +53,24 @@ public class FileUtil {
             quads.add(new Associations.Quad(line.split("[" + innerSplit + outerSplit + "]")));
         }
         return quads;
+    }
+
+    public static List<List<String>> splitLines(String filename, String regexp) throws IOException {
+        var lines = getLines(filename);
+        ArrayList<List<String>> splitLines = new ArrayList<>();
+        for (String line : lines) {
+            splitLines.add(Arrays.stream(line.split(regexp)).toList());
+        }
+        return splitLines;
+    }
+
+    public static List<List<Object>> splitLines(String filename, String regexp, List<BasicParser.Identifier> spec) throws IOException {
+        var lines = splitLines(filename, regexp);
+        return BasicParser.parse(lines, spec);
+    }
+
+    public static List<List<Integer>> splitLinesForInts(String filename, String regexp, List<BasicParser.Identifier> spec) throws IOException {
+        var lines = splitLines(filename, regexp);
+        return BasicParser.parseOutIntegers(lines, spec);
     }
 }
