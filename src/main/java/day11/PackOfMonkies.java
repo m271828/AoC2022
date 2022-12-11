@@ -8,15 +8,18 @@ public class PackOfMonkies {
     private final ArrayList<Monkey> monkeys;
     private final ArrayList<ArrayList<Integer>> allItems;
     private final ArrayList<Integer> actions;
+    private final Integer base;
 
     public PackOfMonkies(List<Monkey> monkeys, List<List<Integer>> allItems) {
         this.monkeys = new ArrayList<>(monkeys);
         this.allItems = new ArrayList<>();
         this.actions = new ArrayList<>();
         System.out.println("Pack of Monkeys Starting Havoc, Initial State:");
+        ArrayList<BigInteger> bases = new ArrayList<>();
         for (int i = 0; i < allItems.size(); i++) {
             this.allItems.add(new ArrayList<>(allItems.get(i)));
             actions.add(0);
+            bases.add(monkeys.get(i).testVal);
             System.out.println("Monkey " + i + ":");
             this.monkeys.get(i).print();
             System.out.print("Current items: ");
@@ -25,6 +28,14 @@ public class PackOfMonkies {
             }
             System.out.println();
         }
+        BigInteger base = bases.get(0);
+        for(var b : bases) {
+            base = base.gcd(b);
+        }
+        if (base > Integer.MAX_VALUE) {
+            throw new RunTimeException(base + " is too large for integer.");
+        }
+        this.base = base;
     }
 
     public void roundOfKeepAway() {
@@ -44,7 +55,7 @@ public class PackOfMonkies {
                 // System.out.println(" Then reduced to " + worry);
                 int newMonkey = m.pass(worry);
                 // System.out.println(" Given to Monkey " + newMonkey);
-                allItems.get(newMonkey).add(worry);
+                allItems.get(newMonkey).add(worry % base);
             }
             allItems.set(i, new ArrayList<>());
         }
