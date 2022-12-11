@@ -32,18 +32,18 @@ public class PackOfMonkies {
         var oldSum = actions.stream().reduce(Integer::sum).orElseThrow();
         for (int i = 0; i < monkeys.size(); i++) {
             var m = monkeys.get(i);
-            System.out.print("Monkey " + i + ": ");
-            m.print();
+            // System.out.print("Monkey " + i + ": ");
+            // m.print();
             var items = allItems.get(i);
             actions.set(i, actions.get(i) + items.size());
             moves += items.size();
             for (var item : items) {
                 int worry = m.calcWorry(item);
-                System.out.println(" " +item + " changed to " + worry);
+                // System.out.println(" " +item + " changed to " + worry);
                 worry /= 3;
-                System.out.println(" Then reduced to " + worry);
+                // System.out.println(" Then reduced to " + worry);
                 int newMonkey = m.pass(worry);
-                System.out.println(" Given to Monkey " + newMonkey);
+                // System.out.println(" Given to Monkey " + newMonkey);
                 allItems.get(newMonkey).add(worry);
             }
             allItems.set(i, new ArrayList<>());

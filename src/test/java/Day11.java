@@ -95,18 +95,21 @@ public class Day11 {
         return new PackOfMonkies(monkeys, allItems);
     }
 
-    /*@BeforeAll
+    @BeforeAll
     public static void configure() throws IOException {
         monkeys = readMonkeysFromFile(filename);
-    }*/
+    }
 
-    /*@Test
+    @Test
     public void testMonkeys() {
+        System.out.println();
         PackOfMonkies pack = new PackOfMonkies(testMonkeys, testItems);
         for (int i = 0; i < 20; i++) {
             pack.roundOfKeepAway();
         }
         assertEquals(10605, pack.monkeyBusiness());
+        // Console output after round 20:
+        // Current number of actions for 10 items: 101 95 7 105  (Previously 292 actions total, now 308. Moves made was 16 and diff is 16.
     }
 
     @Test
@@ -115,11 +118,12 @@ public class Day11 {
             monkeys.roundOfKeepAway();
         }
         int mb = monkeys.monkeyBusiness();
-        assertTrue(mb > 62901);
-        assertTrue(mb < 70176);
-        assertNotEquals(70176, mb);
         System.out.println("Monkey Business is: " + mb + ".");
-    }*/
+        assertNotEquals(70176, mb);
+        // Console output after round 20:
+        // Current number of actions for 36 items: 163 258 51 248 272 21 105 229  (Previously 1278 actions total, now 1347. Moves made was 69 and diff is 69.
+        // Monkey Business is: 70176.
+    }
 
     @Test
     public void alternatePartOne() {
@@ -129,5 +133,8 @@ public class Day11 {
         }
         int mb = pack.monkeyBusiness();
         System.out.println("Monkey Business using manual actuals is: " + mb + ".");
+        // Console output after round 20:
+        // Current number of actions for 36 items: 163 258 51 248 272 21 105 229  (Previously 1278 actions total, now 1347. Moves made was 69 and diff is 69.
+        // Monkey Business using manual actuals is: 70176.
     }
 }
