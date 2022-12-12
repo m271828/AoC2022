@@ -1,67 +1,45 @@
 import day11.Monkey;
-import day11.PackOfMonkies;
+import day11.PackOfMonkeys;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import utility.FileUtil;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 public class Day11 {
     private static final String filename = "src/main/resources/day_11_input.txt";
     private static final List<Monkey> testMonkeys = List.of(
-            new Monkey(Monkey.Op.MULT, 19, 23, 2, 3),
-            new Monkey(Monkey.Op.SUM, 6, 19, 2, 0),
-            new Monkey(Monkey.Op.MULT, null,13, 1, 3),
-            new Monkey(Monkey.Op.SUM, 3, 17, 0, 1)
+            new Monkey(Monkey.Op.MULT, 19L, 23L, 2, 3),
+            new Monkey(Monkey.Op.SUM, 6L, 19L, 2, 0),
+            new Monkey(Monkey.Op.MULT, null, 13L, 1, 3),
+            new Monkey(Monkey.Op.SUM, 3L, 17L, 0, 1)
     );
 
-    private static final List<List<Integer>> testItems = List.of(
-            List.of(79, 98),
-            List.of(54, 65, 75, 74),
-            List.of(79, 60, 97),
-            List.of(74)
+    private static final List<List<Long>> testItems = List.of(
+            List.of(79L, 98L),
+            List.of(54L, 65L, 75L, 74L),
+            List.of(79L, 60L, 97L),
+            List.of(74L)
     );
 
-    private static final List<Monkey> actualMonkeys = List.of(
-            new Monkey(Monkey.Op.MULT, 11, 19, 6, 7),
-            new Monkey(Monkey.Op.SUM, 8, 2, 6, 0),
-            new Monkey(Monkey.Op.SUM, 1, 3, 5, 3),
-            new Monkey(Monkey.Op.MULT, 7, 17, 5, 4),
-            new Monkey(Monkey.Op.SUM, 4, 13, 0, 1),
-            new Monkey(Monkey.Op.SUM, 7, 7, 1, 4),
-            new Monkey(Monkey.Op.MULT, null, 5, 7, 2),
-            new Monkey(Monkey.Op.SUM, 6, 11, 2, 3)
-    );
-
-    private static final List<List<Integer>> actualItems = List.of(
-            List.of(74, 73, 57, 77, 74),
-            List.of(99, 77, 79),
-            List.of(64, 67, 50, 96, 89, 82, 82),
-            List.of(88),
-            List.of(80, 66, 98, 83, 70, 63, 57, 66),
-            List.of(81, 93, 90, 61, 62, 64),
-            List.of(69, 97, 88, 93),
-            List.of(59, 80)
-    );
-
-    private static PackOfMonkies monkeys;
-
-    private static PackOfMonkies readMonkeysFromFile(String file) throws IOException {
+    private static PackOfMonkeys readMonkeysFromFile(String filename, Long worryFactor) throws IOException {
         var groupLines = FileUtil.groupLines(filename);
         ArrayList<Monkey> monkeys = new ArrayList<>();
-        ArrayList<List<Integer>> allItems = new ArrayList<>();
+        ArrayList<List<Long>> allItems = new ArrayList<>();
         for (var group : groupLines) {
-            ArrayList<Integer> items = new ArrayList<>();
+            ArrayList<Long> items = new ArrayList<>();
             Monkey.Op op;
-            Integer opVal = null;
-            Integer testVal;
-            Integer ifTrueIdx;
-            Integer ifFalseIdx;
+            Long opVal = null;
+            Long testVal;
+            int ifTrueIdx;
+            int ifFalseIdx;
             assertEquals(6, group.size());
             var l2 = group.get(1).split("[a-zA-Z:, ]");
             var l3 = group.get(2);
@@ -70,67 +48,72 @@ public class Day11 {
             var l6 = group.get(5).split("[a-zA-Z: ]");
             for (var l : l2) {
                 if (!l.isEmpty()) {
-                    items.add(Integer.parseInt(l));
+                    items.add(Long.parseLong(l));
                 }
             }
             int firstOld = l3.indexOf("old");
             int secondOld = l3.lastIndexOf("old");
             int plusIdx = l3.indexOf("+");
-            op = plusIdx != -1 ? Monkey.Op.SUM : Monkey.Op.MULT;
             if (firstOld == secondOld) {
                 String[] aVal = l3.split("[a-zA-Z:=*+ ]");
                 var sVal = aVal[aVal.length-1];
-                opVal = Integer.parseInt(sVal);
+                opVal = Long.parseLong(sVal);
+                if (plusIdx != -1) {
+                    op = Monkey.Op.SUM;
+                } else {
+                    op = Monkey.Op.MULT;
+                }
+            } else {
+                if (plusIdx != -1) {
+                    op = Monkey.Op.SUM;
+                } else {
+                    op = Monkey.Op.MULT;
+                }
             }
-            testVal = Integer.parseInt(l4[l4.length-1]);
+            testVal = Long.parseLong(l4[l4.length-1]);
             ifTrueIdx = Integer.parseInt(l5[l5.length-1]);
             ifFalseIdx = Integer.parseInt(l6[l6.length-1]);
             monkeys.add(new Monkey(op, opVal, testVal, ifTrueIdx, ifFalseIdx));
             allItems.add(items);
         }
-        return new PackOfMonkies(monkeys, allItems);
-    }
-
-    @BeforeAll
-    public static void configure() throws IOException {
-        monkeys = readMonkeysFromFile(filename);
+        return new PackOfMonkeys(monkeys, allItems, worryFactor);
     }
 
     @Test
     public void testMonkeys() {
         System.out.println();
-        PackOfMonkies pack = new PackOfMonkies(testMonkeys, testItems);
+        var pack = new PackOfMonkeys(testMonkeys, testItems, 3L);
         for (int i = 0; i < 20; i++) {
             pack.roundOfKeepAway();
         }
-        assertEquals(10605, pack.monkeyBusiness());
-        // Console output after round 20:
-        // Current number of actions for 10 items: 101 95 7 105  (Previously 292 actions total, now 308. Moves made was 16 and diff is 16.
+        assertEquals(new BigInteger("10605"), pack.monkeyBusiness());
+
+        var partTwoPack = new PackOfMonkeys(testMonkeys, testItems, null);
+        for (int i = 0; i < 10000; i++) {
+            partTwoPack.roundOfKeepAway();
+        }
+        assertEquals(new BigInteger("2713310158"), partTwoPack.monkeyBusiness());
     }
 
     @Test
-    public void partOne() {
+    public void partOne() throws IOException {
+        var monkeys = readMonkeysFromFile(filename, 3L);
         for (int i = 0; i < 20; i++) {
             monkeys.roundOfKeepAway();
         }
-        int mb = monkeys.monkeyBusiness();
+        var mb = monkeys.monkeyBusiness();
         System.out.println("Monkey Business is: " + mb + ".");
-        assertNotEquals(70176, mb);
-        // Console output after round 20:
-        // Current number of actions for 36 items: 163 258 51 248 272 21 105 229  (Previously 1278 actions total, now 1347. Moves made was 69 and diff is 69.
-        // Monkey Business is: 70176.
+        assertEquals(new BigInteger("69918"), mb);
     }
 
     @Test
-    public void alternatePartOne() {
-        PackOfMonkies pack = new PackOfMonkies(actualMonkeys, actualItems);
-        for (int i = 0; i < 20; i++) {
-            pack.roundOfKeepAway();
+    public void partTwo() throws IOException {
+        /*PackOfMonkeys<BigInteger> monkeys = readMonkeysFromFile(filename, BigInteger::new, BigInteger::add, BigInteger::multiply, (x, y) -> x.mod(y).equals(BigInteger.ZERO));
+        for (int i = 0; i < 10000; i++) {
+            monkeys.roundOfKeepAway();
         }
-        int mb = pack.monkeyBusiness();
-        System.out.println("Monkey Business using manual actuals is: " + mb + ".");
-        // Console output after round 20:
-        // Current number of actions for 36 items: 163 258 51 248 272 21 105 229  (Previously 1278 actions total, now 1347. Moves made was 69 and diff is 69.
-        // Monkey Business using manual actuals is: 70176.
+        var mb = monkeys.monkeyBusiness();
+        assertEquals(1, mb.compareTo(new BigInteger("17748207116")));
+        System.out.println("Monkey business is: " + mb + ".");*/
     }
 }
