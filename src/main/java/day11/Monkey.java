@@ -8,15 +8,15 @@ public class Monkey {
         MULT
     }
     public final Op op;
-    public final Long opVal;
-    public final long testVal;
+    public final BigInteger opVal;
+    public final BigInteger testVal;
     public final int ifTrue;
     public final int ifFalse;
 
     public Monkey(Op op, Long opVal, long testVal, int ifTrue, int ifFalse) {
         this.op = op;
-        this.opVal = opVal;
-        this.testVal = testVal;
+        this.opVal = opVal == null ? null : BigInteger.valueOf(opVal);
+        this.testVal = BigInteger.valueOf(testVal);
         this.ifTrue = ifTrue;
         this.ifFalse = ifFalse;
     }
@@ -29,29 +29,26 @@ public class Monkey {
         System.out.println("Increase worry by " + expr + ". " + testExpr);
     }
 
-    public long calcWorry(long value) {
-        long otherVal = (opVal == null) ? value : opVal;
+    public BigInteger calcWorry(BigInteger value) {
+        BigInteger otherVal = (opVal == null) ? value : opVal;
         if (op == Op.SUM) {
-            return value + otherVal;
+            return value.add(otherVal);
         } else {
-            return value*otherVal;
+            return value.multiply(otherVal);
         }
     }
 
-    public long calcWorry(long value, BigInteger base) {
-        BigInteger safeVal = BigInteger.valueOf(value);
-        BigInteger v2 = (opVal == null) ? safeVal : BigInteger.valueOf(opVal);
-        BigInteger result;
+    public BigInteger calcWorry(BigInteger value, BigInteger base) {
+        BigInteger v2 = (opVal == null) ? value : opVal;
         if (op == Op.SUM) {
-            result = safeVal.add(v2).mod(base);
+            return value.add(v2).mod(base);
         } else {
-            result = safeVal.multiply(v2).mod(base);
+            return value.multiply(v2).mod(base);
         }
-        return result.longValue();
     }
 
-    public int pass(long value) {
-        if (value % testVal == 0) {
+    public int pass(BigInteger value) {
+        if (value.mod(testVal).equals(BigInteger.ZERO)) {
             return ifTrue;
         }
         return ifFalse;

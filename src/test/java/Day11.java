@@ -108,12 +108,12 @@ public class Day11 {
 
     @Test
     public void partTwo() throws IOException {
-        /*PackOfMonkeys<BigInteger> monkeys = readMonkeysFromFile(filename, BigInteger::new, BigInteger::add, BigInteger::multiply, (x, y) -> x.mod(y).equals(BigInteger.ZERO));
+        var monkeys = readMonkeysFromFile(filename, null);
         for (int i = 0; i < 10000; i++) {
             monkeys.roundOfKeepAway();
         }
         var mb = monkeys.monkeyBusiness();
-        assertEquals(1, mb.compareTo(new BigInteger("17748207116")));
-        System.out.println("Monkey business is: " + mb + ".");*/
+        System.out.println("Monkey business is: " + mb + ".");
+        assertEquals(new BigInteger("19573408701"), mb);
     }
 }

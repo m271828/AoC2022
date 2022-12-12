@@ -7,15 +7,15 @@ import java.util.List;
 
 public class PackOfMonkeys {
     private final ArrayList<Monkey> monkeys;
-    private final ArrayList<ArrayList<Long>> allItems;
+    private final ArrayList<ArrayList<BigInteger>> allItems;
     private final ArrayList<Long> actions;
-    private final Long worryReductionFactor;
+    private final BigInteger worryReductionFactor;
     private final BigInteger base;
     private final boolean debug = false;
 
     public PackOfMonkeys(List<Monkey> monkeys, List<List<Long>> allItems, Long worryReductionFactor) {
         this.monkeys = new ArrayList<>(monkeys);
-        this.worryReductionFactor = worryReductionFactor;
+        this.worryReductionFactor = worryReductionFactor == null ? null : BigInteger.valueOf(worryReductionFactor);
         this.allItems = new ArrayList<>();
         this.actions = new ArrayList<>();
         if (debug) {
@@ -23,9 +23,14 @@ public class PackOfMonkeys {
         }
         var calcBase = BigInteger.ONE;
         for (int i = 0; i < allItems.size(); i++) {
-            this.allItems.add(new ArrayList<>(allItems.get(i)));
+            var origItems = allItems.get(i);
+            var bigItems = new ArrayList<BigInteger>();
+            for (int j = 0; j < origItems.size(); j++) {
+                bigItems.add(BigInteger.valueOf(origItems.get(j)));
+            }
+            this.allItems.add(bigItems);
             actions.add(0L);
-            calcBase = calcBase.multiply(BigInteger.valueOf(this.monkeys.get(i).testVal));
+            calcBase = calcBase.multiply(this.monkeys.get(i).testVal);
             if (debug) {
                 System.out.println("Monkey " + i + ":");
                 this.monkeys.get(i).print();
@@ -53,11 +58,11 @@ public class PackOfMonkeys {
             moves += items.size();
             for (var item : items) {
                 int newMonkey;
-                long worry;
+                BigInteger worry;
                 if (worryReductionFactor == null) {
                     worry = m.calcWorry(item, base);
                 } else {
-                    worry = m.calcWorry(item) / worryReductionFactor;
+                    worry = m.calcWorry(item).divide(worryReductionFactor);
                 }
                 newMonkey = m.pass(worry);
                 allItems.get(newMonkey).add(worry);
