@@ -25,6 +25,17 @@ public class Associations {
         public T second() {
             return s2;
         }
+
+        @Override
+        public boolean equals(Object other) {
+            if (this == other) {
+                return true;
+            } else if (other.getClass() != this.getClass()) {
+                return false;
+            }
+            var otherAsThis = (Pair<T>) other;
+            return s1.equals(otherAsThis.s1) && s2.equals(otherAsThis.s2);
+        }
     }
 
     public static class Quad<T> {
