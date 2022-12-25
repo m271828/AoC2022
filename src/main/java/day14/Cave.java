@@ -1,87 +1,184 @@
 package day14;
 
-import utility.Associations;
-import utility.Grid;
+import utility.Coords;
 
 import java.util.List;
 
 public class Cave {
-    private Grid<AirContent> air;
-    private int minRow = 0;
-    private int maxRow = 0;
-    private int minCol = 500;
-    private int maxCol = 500;
-    private Associations.Pair<Integer> sandEntry = new Associations.Pair<>(0, 500);;
-    int sandCount = 0;
-    int[][] sandMoves = {{1, 0}, {1,-1}, {1,1}};
-    boolean filled = false;
-
+    private AirContent[][] cave;
+    private Coords sandEntry;
+    private Coords moveDown = new Coords(0, 1);
+    private Coords moveDownLeft = new Coords(-1, 1);
+    private Coords moveDownRight = new Coords(1, 1);
+    private int minX, maxX, minY, maxY;
+    private boolean hasFloor;
 
     public Cave(List<Rock> rocks) {
-        for (var rock : rocks) {
-            var square = rock.getSurroundingSquare();
-            minRow = Integer.min(minRow, square.first());
-            maxRow = Integer.max(maxRow, square.second());
-            minCol = Integer.min(minCol, square.third());
-            maxCol = Integer.max(maxCol, square.fourth());
+        minX = rocks.stream().flatMap(x -> x.getRock().stream()).map(Coords::getX).min(Integer::compareTo).orElseThrow();
+        maxX = rocks.stream().flatMap(x -> x.getRock().stream()).map(Coords::getX).max(Integer::compareTo).orElseThrow();
+        minY = 0;
+        maxY = rocks.stream().flatMap(y -> y.getRock().stream()).map(Coords::getY).max(Integer::compareTo).orElseThrow();
+
+        cave = new AirContent[maxX-minX+1][maxY+1];
+        for (int i = 0; i <= maxX-minX; i++) {
+            for (int j = 0; j <=maxY; j++) {
+                cave[i][j] = AirContent.EMPTY;
+            }
         }
-        air = new Grid<>(maxRow-minRow+1, maxCol-minCol+1, () -> AirContent.EMPTY);
+
+        // Add rocks
         for (var rock: rocks) {
             for (var point : rock.getRock()) {
-                setAdjusted(point.first(), point.second(), AirContent.ROCK);
+                cave[point.getX()-minX][point.getY()] = AirContent.ROCK;
             }
         }
+
+        sandEntry = new Coords(500-minX, 0);
+        maxX -= minX;
+        minX = 0;
+        hasFloor = false;
     }
 
-    public boolean dropSand() {
-        if (filled || getAdjusted(sandEntry.first(), sandEntry.second()) == AirContent.SAND) {
-            return false;
-        }
-        var point = new Associations.Pair<>(sandEntry.first(), sandEntry.second());
-        boolean finalDestination = false;
-        while (!finalDestination) {
-            var newPoint = testAndMove(point);
-            if (newPoint == null) {
-                filled = true;
-                return false;
-            } else if (newPoint.equals(point)) {
-                finalDestination = true;
-            } else {
-                point = newPoint;
+    public Cave(List<Rock> rocks, int floor) {
+        minX = rocks.stream().flatMap(x -> x.getRock().stream()).map(Coords::getX).min(Integer::compareTo).orElseThrow();
+        maxX = rocks.stream().flatMap(x -> x.getRock().stream()).map(Coords::getX).max(Integer::compareTo).orElseThrow();
+        minY = 0;
+        maxY = floor;
+
+        int diff = maxX-minX+1;
+        minX -= diff;
+        maxX += diff;
+
+
+        cave = new AirContent[maxX-minX+1][maxY+1];
+        for (int i = 0; i <= maxX-minX; i++) {
+            for (int j = 0; j <=maxY; j++) {
+                cave[i][j] = AirContent.EMPTY;
             }
         }
-        setAdjusted(point.first(), point.second(), AirContent.SAND);
-        sandCount++;
-        return true;
+
+        // Add rocks
+        for (var rock: rocks) {
+            for (var point : rock.getRock()) {
+                cave[point.getX()-minX][point.getY()] = AirContent.ROCK;
+            }
+        }
+
+        // Add floor
+        for (int i = 0; i <= maxX-minX; i++) {
+            cave[i][maxY] = AirContent.ROCK;
+        }
+
+        sandEntry = new Coords(500-minX, 0);
+        maxX -= minX;
+        minX = 0;
+        hasFloor = true;
+    }
+
+    public void fillWithSand() {
+        Coords fellLeft = null;
+        Coords fellRight = null;
+        while(true) {
+            Coords location = new Coords(sandEntry.getX(), sandEntry.getY());
+            if (cave[location.getX()][location.getY()] == AirContent.SAND) {
+                return;
+            }
+            while (true) {
+                var downState = Coords.add(location, moveDown);
+                if (downState.getY() > maxY) {
+                    // Infinity
+                    return;
+                } else if (cave[downState.getX()][downState.getY()] == AirContent.EMPTY) {
+                    location.add(moveDown);
+                } else {
+                    var leftDownState = Coords.add(location, moveDownLeft);
+                    if (leftDownState.getX() < 0) {
+                        if (hasFloor) {
+                            expandFloor();
+                            break;
+                        }
+                        // Off the edge midway
+                        if (fellLeft == null) {
+                            fellLeft = location;
+                        } else if (fellLeft.equals(location)) {
+                            return;
+                        }
+                        fellLeft = location;
+                        break;
+                    } else if (cave[leftDownState.getX()][leftDownState.getY()] == AirContent.EMPTY) {
+                        location.add(moveDownLeft);
+                    } else {
+                        var rightDownState = Coords.add(location, moveDownRight);
+                        if (maxX < rightDownState.getX()) {
+                            if (hasFloor) {
+                                expandFloor();
+                                break;
+                            }
+                            // Off the edge midway
+                            if (fellRight == null) {
+                                fellRight = location;
+                            } else if (fellRight.equals(location)) {
+                                return;
+                            }
+                            fellRight = location;
+                            break;
+                        } else if (cave[rightDownState.getX()][rightDownState.getY()] == AirContent.EMPTY) {
+                            location.add(moveDownRight);
+                        } else {
+                            cave[location.getX()][location.getY()] = AirContent.SAND;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
     }
 
     public int getSandCount() {
-        return sandCount;
-    }
-
-    private Associations.Pair<Integer> testAndMove(Associations.Pair<Integer> point) {
-        for (var move : sandMoves) {
-            try {
-                if (getAdjusted(point.first() + move[0], point.second() + move[1]) == AirContent.EMPTY) {
-                    return new Associations.Pair<>(point.first() + move[0], point.second() + move[1]);
-                }
-            } catch (Exception e) {
-                return null;
+        int count = 0;
+        for (int x = minX; x <= maxX; x++) {
+            for (int y = minY; y <= maxY; y++) {
+                count += cave[x][y] == AirContent.SAND ? 1 : 0;
             }
         }
-        return point;
-    }
-
-    private AirContent getAdjusted(int row, int col) {
-        return air.get(row-minRow, col-minCol);
-    }
-
-    private void setAdjusted(int row, int col, AirContent value) {
-        air.set(row-minRow, col-minCol, value);
+        return count;
     }
 
     @Override
     public String toString() {
-        return air.toString();
+        String str = "";
+        for (int i = minX; i < 500; i++) {
+            str += " ";
+        }
+        str += "+\n";
+        return str + cave.toString();
+    }
+
+    private void expandFloor() {
+        int width = maxX+1;
+        int newWidth = width*3;
+        AirContent[][] newCave = new AirContent[newWidth][maxY+1];
+        for (int i = 0; i < width; i++) {
+            for (int j = 0; j < maxY; j++) {
+                newCave[i][j] = AirContent.EMPTY;
+            }
+            newCave[i][maxY] = AirContent.ROCK;
+        }
+
+        for (int i = width; i < width*2; i++) {
+            for (int j = 0; j <= maxY; j++) {
+                newCave[i][j] = cave[i-width][j];
+            }
+        }
+
+        for (int i = width*2; i < newWidth; i++) {
+            for (int j = 0; j < maxY; j++) {
+                newCave[i][j] = AirContent.EMPTY;
+            }
+            newCave[i][maxY] = AirContent.ROCK;
+        }
+        cave = newCave;
+        maxX = newWidth - 1;
+        sandEntry.add(new Coords(width, 0));
     }
 }

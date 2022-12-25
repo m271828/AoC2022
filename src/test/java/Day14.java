@@ -3,6 +3,7 @@ import day14.Cave;
 import day14.Rock;
 import org.junit.jupiter.api.Test;
 import utility.Associations;
+import utility.Coords;
 import utility.FileUtil;
 
 import java.io.IOException;
@@ -17,12 +18,12 @@ public class Day14 {
 
     private static final String[] test = {"498,4 -> 498,6 -> 496,6", "503,4 -> 502,4 -> 502,9 -> 494,9"};
 
-    private static List<Associations.Pair<Integer>> parsePoints(String s) {
+    private static List<Coords> parsePoints(String s) {
         var numberPairs = s.split(" -> ");
-        ArrayList<Associations.Pair<Integer>> points = new ArrayList<>();
+        ArrayList<Coords> points = new ArrayList<>();
         for (int i = 0; i < numberPairs.length; i++) {
             var numbers = numberPairs[i].split(",");
-            points.add(new Associations.Pair<>(Integer.valueOf(numbers[1]), Integer.valueOf(numbers[0])));
+            points.add(new Coords(Integer.parseInt(numbers[0]), Integer.parseInt(numbers[1])));
         }
         return points;
     }
@@ -34,8 +35,7 @@ public class Day14 {
             rocks.add(new Rock(parsePoints(s)));
         }
         var cave = new Cave(rocks);
-        while(cave.dropSand()) {
-        }
+        cave.fillWithSand();
         assertEquals(24, cave.getSandCount());
     }
 
@@ -47,10 +47,22 @@ public class Day14 {
             rocks.add(new Rock(parsePoints(s)));
         }
         var cave = new Cave(rocks);
-        while(cave.dropSand()) {
-        }
+        cave.fillWithSand();
         System.out.println("Part One: " + cave.getSandCount() + " pieces of sand.");
-        assertTrue(cave.getSandCount() > 477);
-        assertTrue(cave.getSandCount() < 1043);
+        assertEquals(828, cave.getSandCount());
+    }
+
+    @Test
+    public void partTwo() throws IOException {
+        var rockStrings = FileUtil.getLines(filename);
+        ArrayList<Rock> rocks = new ArrayList<>();
+        for (var s : rockStrings) {
+            rocks.add(new Rock(parsePoints(s)));
+        }
+        int maxY = rocks.stream().flatMap(y -> y.getRock().stream()).map(Coords::getY).max(Integer::compareTo).orElseThrow();
+        var cave = new Cave(rocks, maxY+2);
+        cave.fillWithSand();
+        System.out.println("Part Two: " + cave.getSandCount() + " pieces of sand.");
+        assertEquals(25500, cave.getSandCount());
     }
 }

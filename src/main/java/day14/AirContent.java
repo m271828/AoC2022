@@ -3,7 +3,8 @@ package day14;
 public enum AirContent {
     EMPTY,
     ROCK,
-    SAND;
+    SAND,
+    EDGE;
 
     @Override
     public String toString() {
@@ -11,8 +12,10 @@ public enum AirContent {
             return ".";
         } else if (this == ROCK) {
             return "#";
-        } else {
+        } else if (this == SAND) {
             return "o";
+        } else {
+            return "E";
         }
     }
 }
