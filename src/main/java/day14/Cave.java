@@ -1,11 +1,12 @@
 package day14;
 
 import utility.Coords;
+import utility.Grid;
 
 import java.util.List;
 
 public class Cave {
-    private AirContent[][] cave;
+    private Grid<AirContent> cave;
     private Coords sandEntry;
     private Coords moveDown = new Coords(0, 1);
     private Coords moveDownLeft = new Coords(-1, 1);
@@ -19,23 +20,16 @@ public class Cave {
         minY = 0;
         maxY = rocks.stream().flatMap(y -> y.getRock().stream()).map(Coords::getY).max(Integer::compareTo).orElseThrow();
 
-        cave = new AirContent[maxX-minX+1][maxY+1];
-        for (int i = 0; i <= maxX-minX; i++) {
-            for (int j = 0; j <=maxY; j++) {
-                cave[i][j] = AirContent.EMPTY;
-            }
-        }
+        cave = new Grid<>(minX, maxX, minY, maxY, () -> AirContent.EMPTY);
 
         // Add rocks
         for (var rock: rocks) {
             for (var point : rock.getRock()) {
-                cave[point.getX()-minX][point.getY()] = AirContent.ROCK;
+                cave.set(point, AirContent.ROCK);
             }
         }
 
-        sandEntry = new Coords(500-minX, 0);
-        maxX -= minX;
-        minX = 0;
+        sandEntry = new Coords(500, 0);
         hasFloor = false;
     }
 
@@ -45,33 +39,22 @@ public class Cave {
         minY = 0;
         maxY = floor;
 
-        int diff = maxX-minX+1;
-        minX -= diff;
-        maxX += diff;
 
-
-        cave = new AirContent[maxX-minX+1][maxY+1];
-        for (int i = 0; i <= maxX-minX; i++) {
-            for (int j = 0; j <=maxY; j++) {
-                cave[i][j] = AirContent.EMPTY;
-            }
-        }
+        cave = new Grid<>(minX, maxX, minY, maxY, () -> AirContent.EMPTY);
 
         // Add rocks
         for (var rock: rocks) {
             for (var point : rock.getRock()) {
-                cave[point.getX()-minX][point.getY()] = AirContent.ROCK;
+                cave.set(point, AirContent.ROCK);
             }
         }
 
         // Add floor
-        for (int i = 0; i <= maxX-minX; i++) {
-            cave[i][maxY] = AirContent.ROCK;
+        for (int i = minX; i <= maxX; i++) {
+            cave.set(new Coords(i, maxY), AirContent.ROCK);
         }
 
-        sandEntry = new Coords(500-minX, 0);
-        maxX -= minX;
-        minX = 0;
+        sandEntry = new Coords(500, 0);
         hasFloor = true;
     }
 
@@ -80,7 +63,7 @@ public class Cave {
         Coords fellRight = null;
         while(true) {
             Coords location = new Coords(sandEntry.getX(), sandEntry.getY());
-            if (cave[location.getX()][location.getY()] == AirContent.SAND) {
+            if (cave.get(location) == AirContent.SAND) {
                 return;
             }
             while (true) {
@@ -88,11 +71,11 @@ public class Cave {
                 if (downState.getY() > maxY) {
                     // Infinity
                     return;
-                } else if (cave[downState.getX()][downState.getY()] == AirContent.EMPTY) {
+                } else if (cave.get(downState) == AirContent.EMPTY) {
                     location.add(moveDown);
                 } else {
                     var leftDownState = Coords.add(location, moveDownLeft);
-                    if (leftDownState.getX() < 0) {
+                    if (leftDownState.getX() < minX) {
                         if (hasFloor) {
                             expandFloor();
                             break;
@@ -105,7 +88,7 @@ public class Cave {
                         }
                         fellLeft = location;
                         break;
-                    } else if (cave[leftDownState.getX()][leftDownState.getY()] == AirContent.EMPTY) {
+                    } else if (cave.get(leftDownState) == AirContent.EMPTY) {
                         location.add(moveDownLeft);
                     } else {
                         var rightDownState = Coords.add(location, moveDownRight);
@@ -122,10 +105,10 @@ public class Cave {
                             }
                             fellRight = location;
                             break;
-                        } else if (cave[rightDownState.getX()][rightDownState.getY()] == AirContent.EMPTY) {
+                        } else if (cave.get(rightDownState) == AirContent.EMPTY) {
                             location.add(moveDownRight);
                         } else {
-                            cave[location.getX()][location.getY()] = AirContent.SAND;
+                            cave.set(location, AirContent.SAND);
                             break;
                         }
                     }
@@ -138,7 +121,7 @@ public class Cave {
         int count = 0;
         for (int x = minX; x <= maxX; x++) {
             for (int y = minY; y <= maxY; y++) {
-                count += cave[x][y] == AirContent.SAND ? 1 : 0;
+                count += cave.get(new Coords(x, y)) == AirContent.SAND ? 1 : 0;
             }
         }
         return count;
@@ -155,30 +138,17 @@ public class Cave {
     }
 
     private void expandFloor() {
-        int width = maxX+1;
-        int newWidth = width*3;
-        AirContent[][] newCave = new AirContent[newWidth][maxY+1];
-        for (int i = 0; i < width; i++) {
-            for (int j = 0; j < maxY; j++) {
-                newCave[i][j] = AirContent.EMPTY;
-            }
-            newCave[i][maxY] = AirContent.ROCK;
-        }
+        int diff = maxX - minX + 1;
+        minX -= diff;
+        maxX += diff;
 
-        for (int i = width; i < width*2; i++) {
-            for (int j = 0; j <= maxY; j++) {
-                newCave[i][j] = cave[i-width][j];
-            }
-        }
+        cave.resize(minX, maxX, minY, maxY);
 
-        for (int i = width*2; i < newWidth; i++) {
-            for (int j = 0; j < maxY; j++) {
-                newCave[i][j] = AirContent.EMPTY;
-            }
-            newCave[i][maxY] = AirContent.ROCK;
+        var point = new Coords(minX, maxY);
+        var move = new Coords(1, 0);
+        for (int x = minX; x <= maxX; x++) {
+            cave.set(point, AirContent.ROCK);
+            point.add(move);
         }
-        cave = newCave;
-        maxX = newWidth - 1;
-        sandEntry.add(new Coords(width, 0));
     }
 }
