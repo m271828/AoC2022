@@ -66,4 +66,9 @@ public class Coords {
             return x == other.x && y == other.y;
         }
     }
+
+    @Override
+    public String toString() {
+        return "(" + x + "," + y + ")";
+    }
 }
