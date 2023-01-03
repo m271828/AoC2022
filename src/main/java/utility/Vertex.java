@@ -2,31 +2,41 @@ package utility;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 
 public class Vertex<T> {
     private final T value;
-    private final ArrayList<Edge<T>> edges;
-
-    private Vertex() {
-        this.value = null;
-        this.edges = new ArrayList<>();
-    }
+    private final ArrayList<Edge<T>> inEdges;
+    private final ArrayList<Edge<T>> outEdges;
 
     public Vertex(T value) {
         this.value = value;
-        edges = new ArrayList<>();
+        this.inEdges = new ArrayList<>();
+        this.outEdges = new ArrayList<>();
     }
 
-    public void addEdge(Edge<T> e) {
-        if (!edges.contains(e)) {
-            edges.add(e);
+    public void addInEdge(Edge<T> e) {
+        if (!inEdges.contains(e)) {
+            inEdges.add(e);
+            inEdges.sort(Comparator.comparingInt(Edge::weight));
         }
     }
 
-    public List<Edge<T>> edges() {
-        return Collections.unmodifiableList(edges);
+    public void addOutEdge(Edge<T> e) {
+        if (!outEdges.contains(e)) {
+            outEdges.add(e);
+            outEdges.sort(Comparator.comparingInt(Edge::weight));
+        }
+    }
+
+    public List<Edge<T>> inEdges() {
+        return Collections.unmodifiableList(inEdges);
+    }
+
+    public List<Edge<T>> outEdges() {
+        return Collections.unmodifiableList(outEdges);
     }
 
     public T value() {
@@ -43,7 +53,7 @@ public class Vertex<T> {
             return false;
         } else {
             var v = (Vertex<T>) o;
-            return Objects.equals(value, v.value) && Objects.equals(edges, v.edges);
+            return Objects.equals(value, v.value) && inEdges.equals(v.inEdges) && outEdges.equals(v.outEdges);
         }
     }
 }

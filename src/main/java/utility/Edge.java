@@ -8,10 +8,8 @@ public class Edge<T> {
         this.from = from;
         this.to = to;
         this.weight = weight;
-    }
-
-    public void setWeight(int weight) {
-        this.weight = weight;
+        from.addOutEdge(this);
+        to.addInEdge(this);
     }
 
     public int weight() {
@@ -24,5 +22,18 @@ public class Edge<T> {
 
     public Vertex<T> to() {
         return to;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        } else if (o == null) {
+            return false;
+        } else if (o.getClass() == this.getClass()) {
+            var other = (Edge<T>) o;
+            return to.equals(other.to) && from.equals(other.from) && weight == other.weight;
+        }
+        return false;
     }
 }

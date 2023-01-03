@@ -1,7 +1,7 @@
 package utility;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.List;
 
 public class Graph<T> implements Comparable {
     public enum Type {
@@ -11,14 +11,12 @@ public class Graph<T> implements Comparable {
 
     private ArrayList<Vertex<T>> vertices;
     private ArrayList<Edge<T>> edges;
-    private HashMap<Vertex<T>, Integer> depths;
     private Type direction;
 
     public Graph(Type direction) {
         vertices = new ArrayList<>();
         edges = new ArrayList<>();
         this.direction = direction;
-        depths = new HashMap<>();
     }
 
     public boolean containsVertex(Vertex<T> v) {
@@ -28,6 +26,9 @@ public class Graph<T> implements Comparable {
     public void addVertex(Vertex<T> v) {
         if (!containsVertex(v)) {
             vertices.add(v);
+            for (var e : v.outEdges()) {
+                addEdge(e);
+            }
         }
     }
 
@@ -36,19 +37,18 @@ public class Graph<T> implements Comparable {
     }
 
     public void addEdge(Edge<T> e) {
-        if (!containsEdge(e) && containsVertex(e.from()) && containsVertex(e.to())) {
+        if (!containsEdge(e)) {
             edges.add(e);
-            var fromDepth = depths.getOrDefault(e.from(), 0);
-            var toDepth = depths.getOrDefault(e.to(), Integer.MAX_VALUE);
-            depths.put(e.to(), Integer.min(fromDepth+1, toDepth));
+            if (!containsVertex(e.from())) {
+                vertices.add(e.from());
+            }
+            if (!containsVertex(e.to())) {
+                vertices.add(e.to());
+            }
+            if (direction == Type.UNDIRECTED) {
+                addEdge(new Edge<>(e.to(), e.from(), e.weight()));
+            }
         }
-    }
-
-    public int distance(Vertex<T> dest) {
-        if (!vertices.contains(dest)) {
-            throw new RuntimeException("End not in graph");
-        }
-        return depths.get(dest);
     }
 
     public String toString() {
@@ -70,5 +70,9 @@ public class Graph<T> implements Comparable {
             return compareTo((Graph<T>) o);
         }
         return toString().compareTo(o.toString());
+    }
+
+    public List<Edge<T>> getEdges() {
+        return edges;
     }
 }
