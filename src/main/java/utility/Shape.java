@@ -1,7 +1,9 @@
 package utility;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Stack;
 import java.util.stream.Collectors;
 
 public class Shape {
@@ -34,50 +36,111 @@ public class Shape {
     }
 
     public long findExteriorArea() {
-        var missingSpaces = new ArrayList<Shape>();
-        for (int x = minX() + 1; x < maxX(); x++) {
-            for (int y = minY() + 1; y < maxY(); y++) {
-                for (int z = minZ() + 1; z < maxZ(); z++) {
-                     var point = new Cube(x, y, z);
-                     if (units.stream().noneMatch(c -> c.equals(point))) {
-                         if (missingSpaces.stream().noneMatch(s -> s.add(point))) {
-                             missingSpaces.add(new Shape(point));
-                         }
-                     }
+        var graph = new Graph<TrackingCube>(Graph.Type.UNDIRECTED);
+        var mapping = new HashMap<String, Vertex<TrackingCube>>();
+        var visited = new HashMap<String, Boolean>();
+        var lbX = minX()-1;
+        var ubX = maxX()+1;
+        var lbY = minY()-1;
+        var ubY = maxY()+1;
+        var lbZ = minZ()-1;
+        var ubZ = maxZ()+1;
+        var count = 0;
+
+        for (int x = lbX; x <= ubX; x++) {
+            for (int y = lbY; y <= ubY; y++) {
+                for (int z = lbZ; z <= ubZ; z++) {
+                    var point = new Vertex<>(new TrackingCube(Space.EMPTY, new Cube(x, y, z)));
+                    graph.addVertex(point);
+                    mapping.put(point.value().toString(), point);
+                    connectIfExists(x-1, y, z, point, mapping, graph);
+                    connectIfExists(x+1, y, z, point, mapping, graph);
+                    connectIfExists(x, y-1, z, point, mapping, graph);
+                    connectIfExists(x, y+1, z, point, mapping, graph);
+                    connectIfExists(x, y, z-1, point, mapping, graph);
+                    connectIfExists(x, y, z+1, point, mapping, graph);
                 }
             }
         }
 
-        // var actualSpaces = removeOpenEdges(missingSpaces);
-
-        var faces = units.stream().flatMap(c -> c.surfaces().stream()).distinct().collect(Collectors.toCollection(ArrayList::new));
-        var missingFaces = missingSpaces.stream().flatMap(s -> s.units.stream()).flatMap(c -> c.surfaces().stream()).distinct().toList();
-        int interiorSides = 0;
-        for (var m : missingFaces) {
-            if (faces.stream().anyMatch(c -> c.equals(m))) {
-                interiorSides++;
-                faces.remove(m);
+        for (var u : units) {
+            var string = "(" + u.x() + "," + u.y() + "," + u.z() + ")";
+            if (mapping.containsKey(string)) {
+                var point = mapping.get(string);
+                point.value().setCube(u);
+                point.value().setFilling(Space.LAVA);
+                mapping.put(string, point);
+            } else {
+                throw new IndexOutOfBoundsException();
             }
         }
-        var sides = units.stream().flatMap(c -> c.surfaces().stream()).count();
-        var distinctSides = units.stream().flatMap(c -> c.surfaces().stream()).distinct().count();
-        return distinctSides - (sides - distinctSides) - interiorSides;
+
+        var stack = new Stack<Vertex<TrackingCube>>();
+        var start = "(" + lbX + "," + lbY + "," + lbZ + ")";
+        stack.push(mapping.get(start));
+        while (!stack.isEmpty()) {
+            var point = stack.pop();
+            if (visited.containsKey(point.toString())) {
+                continue;
+            } else {
+                if (point.value().filling() == Space.LAVA) {
+                    count++;
+                } else if (point.value().filling() == Space.EMPTY) {
+                    for (var e : point.outEdges()) {
+                        var name = e.to().value().toString();
+                        if (visited.containsKey(name)) {
+                            continue;
+                        }
+                        stack.push(e.to());
+                    }
+                    point.value().setFilling(Space.FILLED);
+                    mapping.put(point.value().toString(), point);
+                    visited.put(point.value().toString(), true);
+                }
+            }
+        }
+        return count;
     }
 
-    private List<Cube> removeOpenEdges(ArrayList<Shape> missingSpaces) {
-        var finalList = new ArrayList<Shape>();
-        int minX = minX();
-        int maxX = maxX();
-        int minY = minY();
-        int maxY = maxY();
-        int minZ = minZ();
-        int maxZ = maxZ();
-        for (var space : missingSpaces) {
-            if (space.units.stream().noneMatch(c -> (c.x() == minX || c.x() == maxX || c.y() == minY || c.y() == maxY || c.z() == minZ || c.z() == maxZ))) {
-                finalList.add(space);
-            }
+    private void connectIfExists(int x, int y, int z, Vertex<TrackingCube> point, HashMap<String, Vertex<TrackingCube>> mapping, Graph<TrackingCube> graph) {
+        var string = "(" + x + "," + y + "," + z + ")";
+        if (mapping.containsKey(string)) {
+            var neighbor = mapping.get(string);
+            graph.addEdge(new Edge<>(point, neighbor, 0));
         }
-        return finalList.stream().flatMap(shape -> shape.units.stream()).toList();
+    }
+
+    private class TrackingCube {
+        private Space space;
+        private Cube cube;
+
+        public TrackingCube(Space s, Cube c) {
+            space = s;
+            cube = c;
+        }
+
+        public void setFilling(Space space) {
+            this.space = space;
+        }
+
+        public Space filling() {
+            return space;
+        }
+
+        public void setCube(Cube cube) {
+            this.cube = cube;
+        }
+
+        @Override
+        public String toString() {
+            return "(" + cube.x() + "," + cube.y() + "," + cube.z() + ")";
+        }
+    }
+
+    private enum Space {
+        EMPTY,
+        FILLED,
+        LAVA
     }
 
     private int minX() {

@@ -79,12 +79,6 @@ public class Day18 {
         for (var c : cubes) {
             lava.add(c);
         }
-        var area = lava.exteriorSurfaceArea();
-        assertTrue(1376 < area);
-        assertTrue(3316 > area);
-        assertTrue(1711 != area);
-        assertTrue(2351 != area);
-        assertTrue(2826 != area);
-        System.out.println("Exterior area is " + area + ".");
+        assertEquals(2012, lava.exteriorSurfaceArea());
     }
 }
